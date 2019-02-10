@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Template.WebApp
 {
@@ -17,8 +14,38 @@ namespace Template.WebApp
             CreateWebHostBuilder(args).Build().Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args) => WebHost
+            .CreateDefaultBuilder(args)
+            .UseStartup<Startup>()
+            .UseSerilog(LoggerConfiguration);
+
+        private static void LoggerConfiguration(WebHostBuilderContext host,
+            LoggerConfiguration configuration)
+        {
+            const string template =
+                "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+            const string logDirectory = "logs";
+            var env = host.HostingEnvironment;
+            var logPath = Path.Combine(logDirectory, $"{env.ApplicationName}.log");
+            // in dev mode clear file logs (only files (a file) from the last launch will remain)
+            var directory = new DirectoryInfo(logDirectory);
+            if (env.IsDevelopment() && directory.Exists)
+            {
+                foreach (var file in directory.GetFiles())
+                {
+                    file.Delete();
+                }
+            }
+
+            configuration.ReadFrom.Configuration(host.Configuration)
+                .Enrich.FromLogContext()
+                .Enrich.WithDemystifiedStackTraces()
+                .WriteTo.Console(theme: AnsiConsoleTheme.Code,
+                    outputTemplate: template)
+                .WriteTo.Async(s => s.File(path: logPath,
+                    outputTemplate: template, buffered: env.IsProduction(), rollOnFileSizeLimit: true,
+                    rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31
+                ));
+        }
     }
 }
