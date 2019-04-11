@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Serilog;
 using Serilog.Events;
 
-namespace Template.WebApp
+namespace Template.WebApp.Middleware
 {
     class SerilogMiddleware
     {
