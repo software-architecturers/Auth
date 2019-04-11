@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Template.WebApp", "Template.WebApp\Template.WebApp.csproj", "{3AE8E64E-4337-44D1-92F7-90BFC9C14CAD}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1F5444E5-3FAD-45C2-A81D-E0E8D8A896CA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Template.WebApp", "src\Template.WebApp\Template.WebApp.csproj", "{168878B2-6D72-4BDB-AE2A-841C173814C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,12 +10,12 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3AE8E64E-4337-44D1-92F7-90BFC9C14CAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3AE8E64E-4337-44D1-92F7-90BFC9C14CAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3AE8E64E-4337-44D1-92F7-90BFC9C14CAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3AE8E64E-4337-44D1-92F7-90BFC9C14CAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{168878B2-6D72-4BDB-AE2A-841C173814C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{168878B2-6D72-4BDB-AE2A-841C173814C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{168878B2-6D72-4BDB-AE2A-841C173814C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{168878B2-6D72-4BDB-AE2A-841C173814C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{3AE8E64E-4337-44D1-92F7-90BFC9C14CAD} = {1F5444E5-3FAD-45C2-A81D-E0E8D8A896CA}
+		{168878B2-6D72-4BDB-AE2A-841C173814C8} = {1F5444E5-3FAD-45C2-A81D-E0E8D8A896CA}
 	EndGlobalSection
 EndGlobal

@@ -37,11 +37,9 @@ namespace Template.WebApp
                 await _next(httpContext);
                 var stop = Stopwatch.GetTimestamp();
                 var elapsedMs = GetElapsedMilliseconds(start, stop);
-
                 var statusCode = httpContext.Response?.StatusCode;
                 var type = httpContext.Response?.ContentType;
                 var level = statusCode > 499 ? LogEventLevel.Error : LogEventLevel.Information;
-
                 var log = level == LogEventLevel.Error ? LogForErrorContext(httpContext) : Log;
                 var request = httpContext.Request;
                 log.Write(level, MessageTemplate, request.Protocol, request.Method, GetPath(httpContext), statusCode,type, 
@@ -78,9 +76,8 @@ namespace Template.WebApp
         static double GetElapsedMilliseconds(long start, long stop)
             => (stop - start) * 1000 / (double) Stopwatch.Frequency;
 
-        static string GetPath(HttpContext httpContext)
-        {
-            return httpContext.Features.Get<IHttpRequestFeature>()?.RawTarget ?? httpContext.Request.Path.ToString();
-        }
+        static string GetPath(HttpContext httpContext) => 
+            httpContext.Features.Get<IHttpRequestFeature>()?.RawTarget ?? 
+            httpContext.Request.Path.ToString();
     }
 }
