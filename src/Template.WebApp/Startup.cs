@@ -1,10 +1,15 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using AutoMapper;
+using FluentValidation.AspNetCore;
+using MediatR;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NJsonSchema;
+using Template.Application.Behaviors;
+using Template.Application.Cqrs.Items.Queries;
 using Template.Persistence;
 using Template.WebApp.Middleware;
 
@@ -22,13 +27,25 @@ namespace Template.WebApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAutoMapper(cfg => { cfg.ClearPrefixes(); }, typeof(GetItem).Assembly);
+
+            // MediatR
+            services.AddMediatR(typeof(GetItem).Assembly);
+          // services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
+
             services.AddEntityFrameworkNpgsql()
                 .AddDbContext<ApplicationDbContext>(builder =>
                 {
                     builder.UseNpgsql(_configuration.GetConnectionString("DefaultConnection"));
                 });
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
+                .AddFluentValidation(configuration =>
+                {
+                    configuration.RegisterValidatorsFromAssemblyContaining<GetItem>();
+                });
 
             services.AddOpenApiDocument(settings =>
             {

@@ -1,11 +1,12 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Template.Domain.Entities
+namespace Template.Application.Cqrs.Items.Queries
 {
-    public class Item
+    public class ItemDto
     {
         public Guid Id { get; set; }
+        [Required]
         public string Name { get; set; }
         public string Description { get; set; }
     }
