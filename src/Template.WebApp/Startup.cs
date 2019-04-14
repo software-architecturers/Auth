@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
+using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,10 +46,7 @@ namespace Template.WebApp
                 });
 
 
-            services.AddMvc(options =>
-                {
-                    options.AllowEmptyInputInBodyModelBinding = false;
-                })
+            services.AddMvc(options => { options.AllowEmptyInputInBodyModelBinding = false; })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddFluentValidation(configuration =>
                 {
@@ -79,13 +77,22 @@ namespace Template.WebApp
                 app.UseHsts();
             }
 
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSwagger();
             app.UseReDoc(settings => { settings.Path = "/api"; });
-
-
-            app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseMvcWithDefaultRoute();
+            app.UseSpa(spa =>
+            {
+                spa.Options.SourcePath = "ClientApp";
+                if (!env.IsDevelopment()) return;
+                if (!_configuration.GetValue<bool>("useSpaProxy"))
+                    spa.UseAngularCliServer("start");
+                else
+                {
+                    spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+                }
+            });
         }
     }
 }
