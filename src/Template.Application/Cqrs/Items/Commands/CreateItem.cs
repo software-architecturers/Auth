@@ -11,8 +11,9 @@ namespace Template.Application.Cqrs.Items.Commands
 {
     public class CreateItem : IRequest<ItemDto>
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public CreateItem(ItemInputModel model) => Model = model;
+
+        public ItemInputModel Model { get; }
 
         public class Handler : IRequestHandler<CreateItem, ItemDto>
         {
@@ -27,18 +28,10 @@ namespace Template.Application.Cqrs.Items.Commands
 
             public async Task<ItemDto> Handle(CreateItem request, CancellationToken cancellationToken)
             {
-                var item = _mapper.Map<Item>(request);
+                var item = _mapper.Map<Item>(request.Model);
                 _context.Items.Add(item);
                 await _context.SaveChangesAsync(cancellationToken);
                 return _mapper.Map<ItemDto>(item);
-            }
-        }
-        
-        public class Validator : AbstractValidator<CreateItem>
-        {
-            public Validator()
-            {
-                RuleFor(item => item.Name).NotEmpty();
             }
         }
     }

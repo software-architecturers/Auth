@@ -12,7 +12,7 @@ namespace Template.Application.Behaviors
 
         public Task Process(TRequest request, CancellationToken cancellationToken)
         {
-            Log.Information("Request: {@Request}", request);
+            Log.Information("MediatR request: {@Request}", request);
             return Task.CompletedTask;
         }
     }

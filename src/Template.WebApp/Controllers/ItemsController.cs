@@ -19,17 +19,31 @@ namespace Template.WebApp.Controllers
             => Ok(await Mediator.Send(new GetAllItems()));
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ItemDto>> Get(Guid id)
+        public async Task<ActionResult<ItemDto>> Get([FromRoute] Guid id)
         {
-            var item = await Mediator.Send(new GetItem {Id = id});
-            return item ?? (ActionResult<ItemDto>) NotFound();
+            var item = await Mediator.Send(new GetItem(id));
+            return item;
         }
 
         [HttpPost]
-        public async Task<ActionResult<ItemDto>> Create(CreateItem item)
+        public async Task<ActionResult<ItemDto>> Create([FromBody] ItemInputModel item)
         {
-            var itemDto = await Mediator.Send(item);
+            var itemDto = await Mediator.Send(new CreateItem(item));
             return CreatedAtAction(nameof(Get), new {itemDto.Id}, item);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] ItemDto itemDto)
+        {
+            await Mediator.Send(new EditItem(id, itemDto));
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
+        {
+            await Mediator.Send(new DeleteItem(id));
+            return Ok();
         }
     }
 }

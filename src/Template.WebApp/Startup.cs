@@ -1,14 +1,15 @@
-﻿using AutoMapper;
+﻿using System;
+using AutoMapper;
 using FluentValidation.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NJsonSchema;
-using Template.Application.Behaviors;
 using Template.Application.Cqrs.Items.Queries;
 using Template.Persistence;
 using Template.WebApp.Middleware;
@@ -27,11 +28,15 @@ namespace Template.WebApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddAutoMapper(cfg => { cfg.ClearPrefixes(); }, typeof(GetItem).Assembly);
+            services.AddAutoMapper(cfg =>
+            {
+                cfg.ClearPrefixes();
+                cfg.CreateMissingTypeMaps = false;
+            }, typeof(GetItem).Assembly);
 
             // MediatR
             services.AddMediatR(typeof(GetItem).Assembly);
-          // services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
+            // services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
 
             services.AddEntityFrameworkNpgsql()
                 .AddDbContext<ApplicationDbContext>(builder =>
@@ -40,7 +45,10 @@ namespace Template.WebApp
                 });
 
 
-            services.AddMvc()
+            services.AddMvc(options =>
+                {
+                    options.AllowEmptyInputInBodyModelBinding = false;
+                })
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddFluentValidation(configuration =>
                 {

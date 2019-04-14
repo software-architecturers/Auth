@@ -22,7 +22,7 @@ namespace Template.WebApp
         {
             const string template =
                 "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
-            const string logDirectory = "logs";
+            const string logDirectory = "Logs";
             var env = host.HostingEnvironment;
             var logPath = Path.Combine(logDirectory, $"{env.ApplicationName}.log");
             // in dev mode clear file logs (only files (a file) from the last launch will remain)
