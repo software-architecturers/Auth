@@ -4,6 +4,7 @@ using Template.Domain.Entities;
 
 namespace Template.Persistence.Configurations
 {
+    // ReSharper disable once UnusedMember.Global
     public class ItemConfiguration: IEntityTypeConfiguration<Item>
     {
         public void Configure(EntityTypeBuilder<Item> builder)

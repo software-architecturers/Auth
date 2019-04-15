@@ -1,7 +1,18 @@
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Security.Claims;
+using IdentityModel;
+using IdentityServer4.EntityFramework.Entities;
+using IdentityServer4.EntityFramework.Interfaces;
+using IdentityServer4.EntityFramework.Mappers;
+using IdentityServer4.Models;
+using Microsoft.AspNetCore.Identity;
 using Template.Domain.Entities;
 using static System.Reflection.BindingFlags;
+using ApiResource = IdentityServer4.Models.ApiResource;
+using Client = IdentityServer4.Models.Client;
+using IdentityResource = IdentityServer4.Models.IdentityResource;
 using ILogger = Serilog.ILogger;
 
 namespace Template.Persistence
@@ -17,11 +28,6 @@ namespace Template.Persistence
 
         public static void Initialize(ApplicationDbContext context)
         {
-            if (context.Items.Any())
-            {
-                return;
-            }
-
             var seedMethods = typeof(ApplicationInitializer)
                 .GetMethods(Static | Public | NonPublic)
                 .Where(info => info.Name.StartsWith("Seed") &&
@@ -37,6 +43,11 @@ namespace Template.Persistence
 
         private static void SeedItems(ApplicationDbContext context)
         {
+            if (context.Items.Any())
+            {
+                return;
+            }
+
             Log.Information("Seeding Items");
             var items = new[]
             {
@@ -45,6 +56,121 @@ namespace Template.Persistence
             };
             context.Items.AddRange(items);
             context.SaveChanges();
+        }
+
+        public static void SeedUsers(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        {
+            if (context.Users.Any())
+            {
+                return;
+            }
+
+            Log.Information("Seeding Users");
+            var alice = new ApplicationUser
+            {
+                UserName = "alice",
+                Email = "AliceSmith@email.com"
+            };
+            var result = userManager.CreateAsync(alice, "Pass123$").Result;
+            if (!result.Succeeded)
+            {
+                throw new Exception(string.Join("; ", result.Errors.Select(error => error.Description)));
+            }
+
+            result = userManager.AddClaimsAsync(alice, new Claim[]
+            {
+                new Claim(JwtClaimTypes.Name, "Alice Smith"),
+                new Claim(JwtClaimTypes.GivenName, "Alice"),
+                new Claim(JwtClaimTypes.FamilyName, "Smith"),
+                new Claim(JwtClaimTypes.Email, "AliceSmith@email.com"),
+                new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
+                new Claim(JwtClaimTypes.WebSite, "http://alice.com"),
+                new Claim(JwtClaimTypes.Address,
+                    @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }",
+                    "json")
+            }).Result;
+            if (!result.Succeeded)
+            {
+                throw new Exception(string.Join("; ", result.Errors.Select(error => error.Description)));
+            }
+
+            var bob = new ApplicationUser
+            {
+                UserName = "bob",
+                Email = "BobSmith@email.com",
+                EmailConfirmed = true
+            };
+            result = userManager.CreateAsync(bob, "Pass123$").Result;
+            if (!result.Succeeded)
+            {
+                throw new Exception(string.Join("; ", result.Errors.Select(error => error.Description)));
+            }
+
+            result = userManager.AddClaimsAsync(bob, new Claim[]
+            {
+                new Claim(JwtClaimTypes.Name, "Bob Smith"),
+                new Claim(JwtClaimTypes.GivenName, "Bob"),
+                new Claim(JwtClaimTypes.FamilyName, "Smith"),
+                new Claim(JwtClaimTypes.Email, "BobSmith@email.com"),
+                new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
+                new Claim(JwtClaimTypes.WebSite, "http://bob.com"),
+                new Claim(JwtClaimTypes.Address,
+                    @"{ 'street_address': 'One Hacker Way', 'locality': 'Heidelberg', 'postal_code': 69118, 'country': 'Germany' }",
+                    "json"),
+                new Claim("location", "somewhere")
+            }).Result;
+            if (!result.Succeeded)
+            {
+                throw new Exception(result.Errors.First().Description);
+            }
+        }
+
+        public static void SeedConfiguration(IConfigurationDbContext context)
+        {
+            Log.Information("Seeding Identity Server configuration");
+            if (!context.Clients.Any())
+            {
+                context.Clients.Add(new Client
+                {
+                    ClientId = "spa",
+                    ClientName = "SPA Client",
+                    ClientUri = "https://localhost:5001",
+
+                    AllowedGrantTypes = GrantTypes.Implicit,
+                    AllowAccessTokensViaBrowser = true,
+                    RequireConsent = false,
+                    RedirectUris =
+                    {
+                        "https://localhost:5001",
+                        "https://localhost:5001/index.html",
+                        "https://localhost:5001/callback.html",
+                        "https://localhost:5001/silent.html",
+                        "https://localhost:5001/popup.html",
+                    },
+
+                    PostLogoutRedirectUris = {"http://localhost:5001"},
+                    AllowedCorsOrigins = {"http://localhost:5001"},
+                    AllowedScopes = {"openid", "profile", "api"}
+                }.ToEntity());
+                context.SaveChanges();
+            }
+
+            if (!context.IdentityResources.Any())
+            {
+                context.IdentityResources.AddRange(new IdentityResource[]
+                {
+                    new IdentityResources.OpenId(),
+                    new IdentityResources.Profile()
+                }.Select(r => r.ToEntity()));
+                context.SaveChanges();
+            }
+
+            if (!context.ApiResources.Any())
+            {
+                var apiResource = new ApiResource("api", "Application api");
+                context.ApiResources.Add(apiResource.ToEntity());
+                context.SaveChanges();
+            }
         }
     }
 }

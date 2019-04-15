@@ -1,8 +1,11 @@
 using System;
+using IdentityServer4.EntityFramework.DbContexts;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Template.Domain.Entities;
 using Template.Persistence;
 using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
@@ -26,9 +29,15 @@ namespace Template.WebApp
                 try
                 {
                     var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
-                    context.Database.Migrate();
                     Log.Information("Seeding the database with data...");
+                    context.Database.Migrate();
                     ApplicationInitializer.Initialize(context);
+                    
+                    ApplicationInitializer.SeedUsers(context, serviceProvider.GetRequiredService<UserManager<ApplicationUser>>());
+                    scope.ServiceProvider.GetService<PersistedGrantDbContext>().Database.Migrate();
+                    var configurationDbContext = scope.ServiceProvider.GetService<ConfigurationDbContext>();
+                    configurationDbContext.Database.Migrate();
+                    ApplicationInitializer.SeedConfiguration(configurationDbContext);
                     Log.Information("Seeding the database finished");
                 }
                 catch (Exception e)

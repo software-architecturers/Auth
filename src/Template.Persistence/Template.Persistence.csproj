@@ -5,7 +5,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="IdentityModel" Version="3.10.7" />
+      <PackageReference Include="IdentityServer4" Version="2.4.0" />
+      <PackageReference Include="IdentityServer4.EntityFramework" Version="2.4.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="2.2.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.2.4" />
+      <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="2.2.0" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.2.0" />
       <PackageReference Include="Serilog" Version="2.8.0" />
     </ItemGroup>
