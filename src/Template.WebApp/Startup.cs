@@ -108,7 +108,7 @@ namespace Template.WebApp
 
 
             services.AddAuthentication()
-                .AddLocalApi(options => { options.ExpectedScope = "api"; }).AddOpenIdConnect();
+                .AddLocalApi(options => { options.ExpectedScope = "api"; });
 
             services.AddAuthorization(options =>
             {
