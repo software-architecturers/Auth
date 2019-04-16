@@ -1,0 +1,53 @@
+@page "{returnUrl?}"
+@model LoginModel
+
+
+
+@if (Model.AllowLocal)
+{
+    <form method="post">
+        <input type="hidden" asp-for="InputModel.ReturnUrl"/>
+        <fieldset>
+            <div>
+                <label asp-for="InputModel.Username"></label>
+                <input placeholder="Username" asp-for="InputModel.Username" autofocus>
+            </div>
+            <div>
+                <label asp-for="InputModel.Password"></label>
+                <input type="password" placeholder="Password" asp-for="InputModel.Password" autocomplete="off">
+            </div>
+            <div>
+                <label asp-for="InputModel.RememberMe"></label>
+                <input type="checkbox" asp-for="InputModel.RememberMe">
+                <strong>Remember My Login?</strong>
+            </div>
+            <div>
+                <p>The default users are alice/bob, password: Pass123$</p>
+            </div>
+            <div>
+                <button type="submit" name="button" value="login">Login</button>
+                <button type="submit" name="button" value="cancel">Cancel</button>
+            </div>
+        </fieldset>
+    </form>
+}
+
+
+
+@if (Model.ExternalProviders.Any())
+{
+    foreach (var provider in Model.ExternalProviders)
+    {
+        <ul>
+            <li>
+                <a class="btn btn-default"
+                   asp-controller="External"
+                   asp-action="Challenge"
+                   asp-route-provider="@provider.Name"
+                   asp-route-returnUrl="@Model.ReturnUrl">
+                    @provider.DisplayName
+                </a>
+            </li>
+        </ul>
+    }
+}

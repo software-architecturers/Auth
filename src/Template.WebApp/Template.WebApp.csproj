@@ -46,7 +46,6 @@
 
     <ItemGroup>
       <Folder Include="Logs" />
-      <Folder Include="wwwroot" />
     </ItemGroup>
     <ItemGroup>
         <!-- Don't publish the SPA source files, but do show them in the project files list -->

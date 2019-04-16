@@ -147,7 +147,6 @@ namespace Template.Persistence
                         "https://localhost:5001/silent.html",
                         "https://localhost:5001/popup.html",
                     },
-
                     PostLogoutRedirectUris = {"http://localhost:5001"},
                     AllowedCorsOrigins = {"http://localhost:5001"},
                     AllowedScopes = {"openid", "profile", "api"}

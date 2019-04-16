@@ -1,0 +1,33 @@
+@page
+@model ErrorModel
+
+@{
+    Layout = null;
+}
+
+
+<h3> Sorry, there was an error </h3>
+@if (Model.ErrorMessage != null)
+{
+    <strong>
+        @Model.ErrorMessage.Error
+    </strong>
+
+    if (Model.ErrorMessage.ErrorDescription != null)
+    {
+        <p>@Model.ErrorMessage.ErrorDescription</p>
+    }
+    if (Model.ErrorMessage.RequestId != null)
+    {
+        <p>
+            <strong>Request ID:</strong>
+            <code> @Model.ErrorMessage.RequestId </code>
+        </p>
+    }
+}
+else if (!string.IsNullOrEmpty(Model.RequestId))
+{
+    <p>
+        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+    </p>
+}
