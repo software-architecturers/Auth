@@ -11,12 +11,15 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Serilog;
 using Template.Domain.Entities;
 
 namespace Template.WebApp.Pages
 {
     public class LoginModel : PageModel
     {
+
+        private static ILogger Log = Serilog.Log.Logger.ForContext<LoginModel>();
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IIdentityServerInteractionService _interaction;
@@ -71,6 +74,7 @@ namespace Template.WebApp.Pages
 
         public async Task<IActionResult> OnPostAsync(string button)
         {
+            Log.Information($"OnPost: {ReturnUrl}");
             // check if we are in the context of an authorization request
             var context = await _interaction.GetAuthorizationContextAsync(ReturnUrl);
             // the user clicked the "cancel" button

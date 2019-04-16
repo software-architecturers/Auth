@@ -82,6 +82,7 @@ namespace Template.WebApp
                     options.UserInteraction.LoginUrl = "/login";
                     options.UserInteraction.LogoutUrl = "/logout";
                     options.UserInteraction.ErrorUrl = "/error";
+                    options.UserInteraction.LogoutIdParameter = "logoutId";
                     options.Events.RaiseErrorEvents = true;
                     options.Events.RaiseInformationEvents = true;
                     options.Events.RaiseFailureEvents = true;

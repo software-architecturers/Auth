@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 
@@ -12,8 +13,8 @@ namespace Template.WebApp.Controllers
         {
             return new[] {"value1", "value2"};
         }
-
         // GET api/values/5
+        [Authorize]
         [HttpGet("{id}")]
         public ActionResult<string> Get(int id)
         {
