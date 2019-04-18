@@ -270,4 +270,5 @@ __pycache__/
 
 # End of https://www.gitignore.io/api/aspnetcore
 
-tempkey.rsa
+!oidc.pfx
+!localhost.pfx
