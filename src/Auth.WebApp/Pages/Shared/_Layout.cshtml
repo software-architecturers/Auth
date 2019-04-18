@@ -1,7 +1,10 @@
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
 @{
     Layout = null;
     const string appName = "Template";
     var title = ViewData["Title"];
+    var spaBaseUrl = Configuration.GetValue<string>("spaRoot");
 }
 <!DOCTYPE html>
 
@@ -10,9 +13,31 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@(title == null ? appName : $"{title} - {appName}") </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css" 
+          integrity="sha256-8B1OaG0zT7uYA572S2xOxWACq9NXYPQ+U5kHPV1bJN4=" 
+          crossorigin="anonymous" />
 </head>
 <body>
-<div>
+<nav class="navbar is-primary" role="navigation" aria-label="navigation">
+    <div class="navbar-brand">
+        <!-- navbar items, navbar burger... -->
+        <a (click)="navbarBurgerActive = !navbarBurgerActive" role="button" class="navbar-burger"
+           [class.is-active]="navbarBurgerActive" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+    </div>
+    <div class="navbar-menu" [class.is-active]="navbarBurgerActive">
+        <div class="navbar-start">
+            <a class="navbar-item " routerLink="@spaBaseUrl/home">Home</a>
+            <a class="navbar-item" routerLink="@spaBaseUrl/events">Events</a>
+        </div>
+        <div class="navbar-end">
+        </div>
+    </div>
+</nav>
+<div class="container">
     @RenderBody()
 </div>
 @RenderSection("scripts", required: false)

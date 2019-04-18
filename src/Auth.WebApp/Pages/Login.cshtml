@@ -8,25 +8,30 @@
     <form method="post">
         <input type="hidden" asp-for="InputModel.ReturnUrl"/>
         <fieldset>
-            <div>
-                <label asp-for="InputModel.Username"></label>
-                <input placeholder="Username" asp-for="InputModel.Username" autofocus>
+            <div class="field">
+                <label class="label" asp-for="InputModel.Username"></label>
+                <div class="control">
+                    <input class="input" placeholder="Username" asp-for="InputModel.Username" autofocus>
+                </div>
             </div>
             <div>
-                <label asp-for="InputModel.Password"></label>
-                <input type="password" placeholder="Password" asp-for="InputModel.Password" autocomplete="off">
+                <label class="label" asp-for="InputModel.Password"></label>
+                <div class="control">
+                    <input class="input" type="password" placeholder="Password" asp-for="InputModel.Password" autocomplete="off">
+                </div>
             </div>
-            <div>
-                <label asp-for="InputModel.RememberMe"></label>
-                <input type="checkbox" asp-for="InputModel.RememberMe">
-                <strong>Remember My Login?</strong>
+            <div class="field">
+                <label class="label">Remember My Login?</label>
+                <div class="control">
+                    <input class="checkbox" type="checkbox" asp-for="InputModel.RememberMe">
+                </div>
             </div>
             <div>
                 <p>The default users are alice/bob, password: Pass123$</p>
             </div>
-            <div>
-                <button type="submit" name="button" value="login">Login</button>
-                <button type="submit" name="button" value="cancel">Cancel</button>
+            <div class="control">
+                <button class="button is-link" type="submit" name="button" value="login">Login</button>
+                <button class="button is-text" type="submit" name="button" value="cancel">Cancel</button>
             </div>
         </fieldset>
     </form>
@@ -40,7 +45,7 @@
     {
         <ul>
             <li>
-                <a class="btn btn-default"
+                <a class="button"
                    asp-controller="External"
                    asp-action="Challenge"
                    asp-route-provider="@provider.Name"

@@ -116,21 +116,19 @@ namespace Auth.Persistence
                 {
                     ClientId = "spa",
                     ClientName = "SPA Client",
-                    ClientUri = "https://localhost:5001",
+                    ClientUri = "http://localhost:4200",
 
                     AllowedGrantTypes = GrantTypes.Implicit,
                     AllowAccessTokensViaBrowser = true,
                     RequireConsent = false,
                     RedirectUris =
                     {
-                        "https://localhost:5001",
-                        "https://localhost:5001/index.html",
-                        "https://localhost:5001/callback.html",
-                        "https://localhost:5001/silent.html",
-                        "https://localhost:5001/popup.html",
+                        "http://localhost:4200",
+                        "http://localhost:4200/auth-callback",
+                        "http://localhost:4200/assets/silent.html",
                     },
-                    PostLogoutRedirectUris = {"http://localhost:5001"},
-                    AllowedCorsOrigins = {"http://localhost:5001"},
+                    PostLogoutRedirectUris = {"http://localhost:4200"},
+                    AllowedCorsOrigins = {"http://localhost:4200"},
                     AllowedScopes = {"openid", "profile", "api"}
                 }.ToEntity());
                 context.SaveChanges();
