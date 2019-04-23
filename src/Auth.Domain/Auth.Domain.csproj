@@ -5,9 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Reference Include="Microsoft.Extensions.Identity.Stores, Version=2.2.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60">
-        <HintPath>..\..\..\..\..\..\..\home\hunter04d\.nuget\packages\microsoft.extensions.identity.stores\2.2.0\lib\netstandard2.0\Microsoft.Extensions.Identity.Stores.dll</HintPath>
-      </Reference>
+      <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="2.2.0" />
     </ItemGroup>
 
 </Project>

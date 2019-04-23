@@ -128,6 +128,7 @@ namespace Auth.WebApp
                     ).AllowAnyHeader().AllowAnyMethod();
                 });
             });
+            services.AddHttpsRedirection(options => { options.HttpsPort = 5001; });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -144,9 +145,8 @@ namespace Auth.WebApp
                 // You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
-            app.UseCors();
             app.UseHttpsRedirection();
+            app.UseCors();
             app.UseStaticFiles();
             app.UseSwagger();
             app.UseIdentityServer();

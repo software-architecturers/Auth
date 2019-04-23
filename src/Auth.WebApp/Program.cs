@@ -1,13 +1,11 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Net;
-using Auth.WebApp;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 
-namespace Template.WebApp
+namespace Auth.WebApp
 {
     public class Program
     {
@@ -20,10 +18,10 @@ namespace Template.WebApp
             .UseSerilog(LoggerConfiguration)
             .UseKestrel(options =>
             {
-                options.Listen(IPAddress.Loopback, 5000);
-                options.Listen(IPAddress.Loopback, 5001, listenOptions =>
+                options.Listen(IPAddress.Any, 5000);
+                options.Listen(IPAddress.Any, 5001, listenOptions =>
                 {
-                    // password is temporary as the empty openssl password causes an issue
+                    // password is temporary as an empty openssl password causes an issue
                     listenOptions.UseHttps("localhost.pfx", "12345");
                 });
             });
