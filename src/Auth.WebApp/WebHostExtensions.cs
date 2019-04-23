@@ -21,10 +21,6 @@ namespace Auth.WebApp
             {
                 var serviceProvider = scope.ServiceProvider;
                 var env = serviceProvider.GetRequiredService<IHostingEnvironment>();
-                if (!env.IsDevelopment())
-                {
-                    return host;
-                }
                 
                 try
                 {

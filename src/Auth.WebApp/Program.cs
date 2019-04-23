@@ -2,6 +2,7 @@
 using System.Net;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 
@@ -14,6 +15,10 @@ namespace Auth.WebApp
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) => WebHost
             .CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration((host, config) =>
+            {
+                config.AddEnvironmentVariables();
+            })
             .UseStartup<Startup>()
             .UseSerilog(LoggerConfiguration)
             .UseKestrel(options =>
