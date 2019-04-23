@@ -4,13 +4,11 @@ EXPOSE 5000
 EXPOSE 5001
 # Copy csproj and restore
 COPY ./*.sln ./
-COPY src/Auth.Application/Auth.Application.csproj  ./src/Auth.Application/
-COPY src/Auth.Domain/Auth.Domain.csproj  ./src/Auth.Domain/
-COPY src/Auth.Persistence/Auth.Persistence.csproj ./src/Auth.Persistence/
-COPY src/Auth.WebApp/Auth.WebApp.csproj ./src/Auth.WebApp/
+COPY src/*/*.csproj ./
+RUN for file in $(ls *.csproj); do mkdir -p src/${file%.*}/ && mv $file src/${file%.*}/; done
 RUN dotnet restore
 
-COPY src/ ./src/
+COPY ./src ./src
 RUN dotnet publish ./src/Auth.WebApp/Auth.WebApp.csproj -c Release -o /app/out
 
 # Build runtime image
