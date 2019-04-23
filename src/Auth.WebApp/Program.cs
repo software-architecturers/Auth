@@ -10,15 +10,12 @@ namespace Auth.WebApp
 {
     public class Program
     {
-        public static void Main(string[] args) => 
+        public static void Main(string[] args) =>
             CreateWebHostBuilder(args).Build().SeedDatabase().Run();
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) => WebHost
             .CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((host, config) =>
-            {
-                config.AddEnvironmentVariables();
-            })
+            .ConfigureAppConfiguration((host, config) => { config.AddEnvironmentVariables(); })
             .UseStartup<Startup>()
             .UseSerilog(LoggerConfiguration)
             .UseKestrel(options =>
@@ -36,28 +33,32 @@ namespace Auth.WebApp
         {
             const string template =
                 "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
-            const string logDirectory = "Logs";
+          
             var env = host.HostingEnvironment;
-            var logPath = Path.Combine(logDirectory, $"{env.ApplicationName}.log");
-            // in dev mode clear file logs (only files (a file) from the last launch will remain)
-            var directory = new DirectoryInfo(logDirectory);
-            if (env.IsDevelopment() && directory.Exists)
-            {
-                foreach (var file in directory.GetFiles())
-                {
-                    file.Delete();
-                }
-            }
+           
 
             configuration.ReadFrom.Configuration(host.Configuration)
                 .Enrich.FromLogContext()
                 .Enrich.WithDemystifiedStackTraces()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code,
-                    outputTemplate: template)
-                .WriteTo.Async(s => s.File(path: logPath,
+                    outputTemplate: template);
+            if (env.IsDevelopment())
+            {
+                const string logDirectory = "Logs";
+                var logPath = Path.Combine(logDirectory, $"{env.ApplicationName}.log");
+                var directory = new DirectoryInfo(logDirectory);
+                if (directory.Exists)
+                {
+                    foreach (var file in directory.GetFiles())
+                    {
+                        file.Delete();
+                    }
+                }
+                configuration.WriteTo.Async(s => s.File(path: logPath,
                     outputTemplate: template, buffered: env.IsProduction(), rollOnFileSizeLimit: true,
                     rollingInterval: RollingInterval.Day, retainedFileCountLimit: 31
                 ));
+            }
         }
     }
 }
