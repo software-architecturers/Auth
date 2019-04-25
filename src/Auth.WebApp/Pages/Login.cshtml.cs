@@ -18,7 +18,6 @@ namespace Auth.WebApp.Pages
 {
     public class LoginModel : PageModel
     {
-
         private static ILogger Log = Serilog.Log.Logger.ForContext<LoginModel>();
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -40,25 +39,22 @@ namespace Auth.WebApp.Pages
             _events = events;
         }
 
-        [BindProperty(SupportsGet = true)] public string ReturnUrl { get; set; }
-
         [BindProperty] public LoginInputModel InputModel { get; set; }
-        public IEnumerable<AuthenticationScheme> ExternalProviders { get; set; }
+        public IEnumerable<AuthenticationScheme> ExternalProviders { get; private set; }
 
-        public bool AllowLocal { get; set; } = true;
+        public bool AllowLocal { get; } = true;
 
-        public async Task<IActionResult> OnGetAsync()
+        public string ReturnUrl { get; private set; }
+
+        public async Task<IActionResult> OnGetAsync(string returnUrl = null)
         {
-            var context = await _interaction.GetAuthorizationContextAsync(ReturnUrl);
-            InputModel = new LoginInputModel()
-            {
-                Username = context?.LoginHint,
-                ReturnUrl = ReturnUrl
-            };
+            ReturnUrl = returnUrl;
+            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+            InputModel = new LoginInputModel {Username = context?.LoginHint};
             if (context?.IdP != null)
             {
-                // TODO: idp:// is specified short circuit the ui 
-                return RedirectToAction("Challenge", "External", new {provider = context.IdP, ReturnUrl});
+                return RedirectToAction("Challenge", "External",
+                    new {provider = context.IdP, returnUrl});
             }
 
             ExternalProviders = await _signInManager.GetExternalAuthenticationSchemesAsync();
@@ -72,55 +68,49 @@ namespace Auth.WebApp.Pages
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(string button)
+        public async Task<IActionResult> OnPostAsync(string button, string returnUrl = null)
         {
-            Log.Information($"OnPost: {ReturnUrl}");
             // check if we are in the context of an authorization request
-            var context = await _interaction.GetAuthorizationContextAsync(ReturnUrl);
+            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
             // the user clicked the "cancel" button
             if (button != "login")
             {
                 // since we don't have a valid context, then we just go back to the home page
                 if (context == null) return Redirect("~/");
-                
+
                 // if the user cancels, send a result back into IdentityServer as if they 
                 // denied the consent (even if this client does not require consent).
                 // this will send back an access denied OIDC error response to the client.
                 await _interaction.GrantConsentAsync(context, ConsentResponse.Denied);
-                return Redirect(ReturnUrl);
-               
+                return Redirect(returnUrl);
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return Page();
+
+            var result = await _signInManager.PasswordSignInAsync(InputModel.Username, InputModel.Password,
+                InputModel.RememberMe, true);
+            if (result.Succeeded)
             {
-                var result = await _signInManager.PasswordSignInAsync(InputModel.Username, InputModel.Password,
-                    InputModel.RememberMe, true);
-                if (result.Succeeded)
+                var user = await _userManager.FindByNameAsync(InputModel.Username);
+                await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName));
+
+                if (context != null || Url.IsLocalUrl(returnUrl))
                 {
-                    var user = await _userManager.FindByNameAsync(InputModel.Username);
-                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName));
-
-                    if (context != null)
-                    {
-                        return Redirect(ReturnUrl);
-                    }
-
-                    if (Url.IsLocalUrl(ReturnUrl))
-                    {
-                        return Redirect(ReturnUrl);
-                    }
-
-                    if (string.IsNullOrEmpty(ReturnUrl))
-                    {
-                        return Redirect("~/");
-                    }
-
-                    // user might have clicked on a malicious link - should be logged
-                    throw new Exception("invalid return URL");
+                    return Redirect(returnUrl);
                 }
+                if (string.IsNullOrEmpty(returnUrl))
+                {
+                    return Redirect("~/");
+                }
+                // user might have clicked on a malicious link - should be logged
+                throw new Exception("invalid return URL");
+            }
 
-                await _events.RaiseAsync(new UserLoginFailureEvent(InputModel.Username, "invalid credentials"));
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            await _events.RaiseAsync(new UserLoginFailureEvent(InputModel.Username, "invalid credentials"));
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            if (result.IsLockedOut)
+            {
+                Log.Warning("{Username} locked out", InputModel.Username);
             }
 
             return Page();
@@ -132,7 +122,6 @@ namespace Auth.WebApp.Pages
             public string Username { get; set; }
             public string Password { get; set; }
             public bool RememberMe { get; set; }
-            public string ReturnUrl { get; set; }
         }
 
         public class LoginInputModelValidator : AbstractValidator<LoginInputModel>
