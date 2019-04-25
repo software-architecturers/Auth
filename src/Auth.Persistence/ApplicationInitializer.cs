@@ -125,7 +125,7 @@ namespace Auth.Persistence
                     {
                         "http://localhost:4200",
                         "http://localhost:4200/auth-callback",
-                        "http://localhost:4200/assets/silent.html",
+                        "http://localhost:4200/silent.html",
                     },
                     PostLogoutRedirectUris = {"http://localhost:4200"},
                     AllowedCorsOrigins = {"http://localhost:4200"},
