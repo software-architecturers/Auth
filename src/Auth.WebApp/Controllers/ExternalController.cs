@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Auth.Application.Cqrs.External.Commands;
+using Auth.Application.Cqrs.External.Queries;
 using IdentityModel;
 using IdentityServer4.Events;
 using IdentityServer4.Services;
@@ -13,6 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Auth.Domain.Entities;
+using MediatR;
 
 namespace Auth.WebApp.Controllers
 {
@@ -22,24 +25,24 @@ namespace Auth.WebApp.Controllers
     [AllowAnonymous]
     public class ExternalController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IIdentityServerInteractionService _interaction;
         private readonly IClientStore _clientStore;
         private readonly IEventService _events;
+        private readonly IMediator _mediator;
 
         public ExternalController(
-            UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IIdentityServerInteractionService interaction,
             IClientStore clientStore,
-            IEventService events)
+            IEventService events,
+            IMediator mediator)
         {
-            _userManager = userManager;
             _signInManager = signInManager;
             _interaction = interaction;
             _clientStore = clientStore;
             _events = events;
+            _mediator = mediator;
         }
 
         /// <summary>
@@ -85,32 +88,30 @@ namespace Auth.WebApp.Controllers
             }
 
             // lookup our user and external provider info
-            var (user, provider, providerUserId, claims) = await FindUserFromExternalProviderAsync(result);
-            if (user == null)
-            {
-                // this might be where you might initiate a custom workflow for user registration
-                // in this sample we don't show how that would be done, as our sample implementation
-                // simply auto-provisions new external user
-                user = await AutoProvisionUserAsync(provider, providerUserId, claims);
-            }
+            var externalUserDto = await _mediator.Send(new FindUser(result));
 
-            // this allows us to collect any additonal claims or properties
-            // for the specific prtotocols used and store them in the local auth cookie.
-            // this is typically used to store data needed for signout from those protocols.
+
+            var user = externalUserDto.User ?? await _mediator.Send(new CreateUser(externalUserDto));
+
+            // this allows us to collect any additional claims or properties
+            // for the specific protocols used and store them in the local auth cookie.
+            // this is typically used to store data needed for sign-out from oidc
             var additionalLocalClaims = new List<Claim>();
             var localSignInProps = new AuthenticationProperties();
             ProcessLoginCallbackForOidc(result, additionalLocalClaims, localSignInProps);
-            ProcessLoginCallbackForWsFed(result, additionalLocalClaims, localSignInProps);
-            ProcessLoginCallbackForSaml2p(result, additionalLocalClaims, localSignInProps);
 
             // issue authentication cookie for user
-            // we must issue the cookie maually, and can't use the SignInManager because
+            // we must issue the cookie manually, and can't use the SignInManager because
             // it doesn't expose an API to issue additional claims from the login workflow
             var principal = await _signInManager.CreateUserPrincipalAsync(user);
             additionalLocalClaims.AddRange(principal.Claims);
-            var name = principal.FindFirst(JwtClaimTypes.Name)?.Value ?? user.Id;
-            await _events.RaiseAsync(new UserLoginSuccessEvent(provider, providerUserId, user.Id, name));
-            await HttpContext.SignInAsync(user.Id, name, provider, localSignInProps, additionalLocalClaims.ToArray());
+            var name = principal.FindFirst(JwtClaimTypes.Name)?.Value ?? user.UserName ?? user.Id;
+
+            await _events.RaiseAsync(new UserLoginSuccessEvent(externalUserDto.Provider, externalUserDto.ProviderUserId,
+                user.Id, name));
+
+            await HttpContext.SignInAsync(user.Id, name, externalUserDto.Provider, localSignInProps,
+                additionalLocalClaims.ToArray());
 
             // delete temporary cookie used during external authentication
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
@@ -122,103 +123,9 @@ namespace Auth.WebApp.Controllers
                 : Redirect("~/");
         }
 
-        private async Task<(ApplicationUser user, string provider, string providerUserId, IList<Claim> claims)>
-            FindUserFromExternalProviderAsync(AuthenticateResult result)
-        {
-            var externalUser = result.Principal;
 
-            // try to determine the unique id of the external user (issued by the provider)
-            // the most common claim type for that are the sub claim and the NameIdentifier
-            // depending on the external provider, some other claim type might be used
-            var userIdClaim = externalUser.FindFirst(JwtClaimTypes.Subject) ??
-                              externalUser.FindFirst(ClaimTypes.NameIdentifier) ??
-                              throw new Exception("Unknown userid");
-
-            // remove the user id claim so we don't include it as an extra claim if/when we provision the user
-            var claims = externalUser.Claims.ToList();
-            claims.Remove(userIdClaim);
-
-            var provider = result.Properties.Items["scheme"];
-            var providerUserId = userIdClaim.Value;
-
-            // find external user
-            var user = await _userManager.FindByLoginAsync(provider, providerUserId);
-
-            return (user, provider, providerUserId, claims);
-        }
-
-        private async Task<ApplicationUser> AutoProvisionUserAsync(string provider, string providerUserId,
-            IList<Claim> claims)
-        {
-            // create a list of claims that we want to transfer into our store
-            var filtered = new List<Claim>();
-
-            // user's display name
-            var name = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Name)?.Value ??
-                       claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
-            if (name != null)
-            {
-                filtered.Add(new Claim(JwtClaimTypes.Name, name));
-            }
-            else
-            {
-                // build the name from first + last
-                var first = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.GivenName)?.Value ??
-                            claims.FirstOrDefault(x => x.Type == ClaimTypes.GivenName)?.Value;
-                var last = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.FamilyName)?.Value ??
-                           claims.FirstOrDefault(x => x.Type == ClaimTypes.Surname)?.Value;
-                if (first != null && last != null)
-                {
-                    name = first + " " + last;
-                    filtered.Add(new Claim(JwtClaimTypes.Name, name));
-                }
-                else if (first != null)
-                {
-                    filtered.Add(new Claim(JwtClaimTypes.Name, first));
-                }
-                else if (last != null)
-                {
-                    filtered.Add(new Claim(JwtClaimTypes.Name, last));
-                }
-            }
-
-            // email
-            var email = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Email)?.Value ??
-                        claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
-            if (email != null)
-            {
-                filtered.Add(new Claim(JwtClaimTypes.Email, email));
-            }
-
-            var pictureUrl = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Picture)?.Value;
-            if (pictureUrl != null)
-            {
-                filtered.Add(new Claim(JwtClaimTypes.Picture, pictureUrl));
-            }
-
-            var user = new ApplicationUser
-            {
-                UserName = name,
-                Email = email
-            };
-            var identityResult = await _userManager.CreateAsync(user);
-            if (!identityResult.Succeeded) throw new Exception(identityResult.Errors.First().Description);
-
-            if (filtered.Any())
-            {
-                identityResult = await _userManager.AddClaimsAsync(user, filtered);
-                if (!identityResult.Succeeded) throw new Exception(identityResult.Errors.First().Description);
-            }
-
-            identityResult =
-                await _userManager.AddLoginAsync(user, new UserLoginInfo(provider, providerUserId, provider));
-            if (!identityResult.Succeeded) throw new Exception(identityResult.Errors.First().Description);
-
-            return user;
-        }
-
-
-        private void ProcessLoginCallbackForOidc(AuthenticateResult externalResult, IList<Claim> localClaims,
+        private static void ProcessLoginCallbackForOidc(AuthenticateResult externalResult,
+            ICollection<Claim> localClaims,
             AuthenticationProperties localSignInProps)
         {
             // if the external system sent a session id claim, copy it over
@@ -235,16 +142,6 @@ namespace Auth.WebApp.Controllers
             {
                 localSignInProps.StoreTokens(new[] {new AuthenticationToken {Name = "id_token", Value = idToken}});
             }
-        }
-
-        private void ProcessLoginCallbackForWsFed(AuthenticateResult externalResult, List<Claim> localClaims,
-            AuthenticationProperties localSignInProps)
-        {
-        }
-
-        private void ProcessLoginCallbackForSaml2p(AuthenticateResult externalResult, List<Claim> localClaims,
-            AuthenticationProperties localSignInProps)
-        {
         }
     }
 }
