@@ -1,7 +1,7 @@
+using Auth.WebApp.Filters;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Template.WebApp.Filters;
 
 namespace Auth.WebApp.Controllers
 {
