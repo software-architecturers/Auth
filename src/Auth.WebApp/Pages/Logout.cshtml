@@ -1,10 +1,9 @@
-@page "{logoutId?}"
+@page
 @model LogoutModel
 
 <div class="logout-page">
     <p>Would you like to logout </p>
-    <form method="post">
-        <input type="hidden" asp-for="LogoutId"/>
-        <button type="submit">Yes</button>
+    <form method="post" asp-route-logoutId="@Model.LogoutId">
+        <button class="button is-danger" type="submit">Yes</button>
     </form>
 </div>
