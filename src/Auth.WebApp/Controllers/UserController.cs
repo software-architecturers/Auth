@@ -23,6 +23,9 @@ namespace Auth.WebApp.Controllers
 
 
         [HttpPost]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesDefaultResponseType]
         public async Task<IActionResult> Register([FromBody] RegisterUser registerUserCommand)
         {
             await Mediator.Send(registerUserCommand);

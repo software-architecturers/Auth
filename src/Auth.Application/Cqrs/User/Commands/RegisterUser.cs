@@ -12,6 +12,7 @@ namespace Auth.Application.Cqrs.User.Commands
 {
     public class RegisterUser : IRequest<Unit>
     {
+        public string UserName { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
         public string ConfirmPassword { get; set; }
@@ -31,7 +32,7 @@ namespace Auth.Application.Cqrs.User.Commands
 
             public async Task<Unit> Handle(RegisterUser request, CancellationToken cancellationToken)
             {
-                var user = new ApplicationUser {UserName = request.Email, Email = request.Email, EmailConfirmed = true};
+                var user = new ApplicationUser {UserName = request.UserName, Email = request.Email, EmailConfirmed = true};
                 var result = await _userManager.CreateAsync(user, request.Password);
                 if (!result.Succeeded)
                 {
@@ -51,6 +52,7 @@ namespace Auth.Application.Cqrs.User.Commands
         {
             public Validator()
             {
+                RuleFor(model => model.UserName).NotEmpty();
                 RuleFor(model => model.Email).EmailAddress().NotEmpty();
                 RuleFor(model => model.Password).Length(6, 100);
                 RuleFor(model => model.ConfirmPassword).Length(6, 100);
