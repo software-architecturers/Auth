@@ -16,9 +16,9 @@ namespace Auth.WebApp.Pages
             _env = env;
             AutomaticRedirectAfterSignOut = !env.IsDevelopment();
         }
-        public string ClientName { get; set; }
-        public string PostLogoutRedirectUri { get; set; }
-        public string SignOutIframeUrl { get; set; }
+        public string ClientName { get; private set; }
+        public string PostLogoutRedirectUri { get; private set; }
+        public string SignOutIframeUrl { get; private set; }
         public bool AutomaticRedirectAfterSignOut { get; }
         
         public async Task OnGet(string logoutId)

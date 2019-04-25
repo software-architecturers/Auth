@@ -1,10 +1,11 @@
 using System;
+using Auth.Application.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Auth.Application.Exceptions;
+using Microsoft.EntityFrameworkCore.Internal;
 
-namespace Template.WebApp.Filters
+namespace Auth.WebApp.Filters
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class ApiExceptionFilterAttribute : ExceptionFilterAttribute
@@ -20,7 +21,15 @@ namespace Template.WebApp.Filters
                     return;
                 case BadRequestException badRequestException:
                     context.HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-                    context.Result = new BadRequestResult();
+                    if (badRequestException.Errors != null && badRequestException.Errors.Any())
+                    {
+                        context.Result = new BadRequestObjectResult(badRequestException.Errors);
+                    }
+                    else
+                    {
+                        context.Result = new BadRequestResult();
+                    }
+
                     return;
             }
         }

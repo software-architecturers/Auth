@@ -1,12 +1,11 @@
-@page "{returnUrl?}"
+@page
 @model LoginModel
 
 
 
 @if (Model.AllowLocal)
 {
-    <form method="post">
-        <input type="hidden" asp-for="InputModel.ReturnUrl"/>
+    <form asp-route-returnUrl="@Model.ReturnUrl" method="post">
         <fieldset>
             <div class="field">
                 <label class="label" asp-for="InputModel.Username"></label>
