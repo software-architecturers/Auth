@@ -1,0 +1,35 @@
+version: '3.7'
+
+services:
+  postgres-auth:
+    image: 'postgres:11.2'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-12345}
+      POSTGRES_DB: Auth
+    volumes:
+      - postgres-auth:/var/lib/postgresql/data
+    ports:
+      - '5433:5432'
+    restart: unless-stopped
+
+  auth:
+    image: auth:latest
+    build: '.'
+    environment:
+      ConnectionStrings__DefaultConnection: 'Host=postgres-auth;Port=5432;Database=Auth;Username=${POSTGRES_USER:-user};Password=${POSTGRES_PASSWORD:-12345}'
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: 1m
+        max-file: '1'
+    ports:
+      - '5001:5001'
+      - '5000:5000'
+    restart: always
+    depends_on:
+      - postgres-auth
+
+volumes:
+  postgres-auth:
+    driver: local
