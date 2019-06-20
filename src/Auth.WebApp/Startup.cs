@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography.X509Certificates;
 using Auth.Application.Cqrs.UserInfo.Queries;
+using Auth.Application.HttpClients.EventsCore;
 using Auth.Domain.Entities;
 using Auth.Persistence;
 using Auth.WebApp.Middleware;
@@ -44,7 +45,7 @@ namespace Auth.WebApp
             // MediatR
             services.AddMediatR(typeof(UserInfo).Assembly);
             // services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
-
+            services.AddHttpClient<EventsCoreHttpClient>();
             services.AddEntityFrameworkNpgsql()
                 .AddDbContext<ApplicationDbContext>(builder =>
                 {
