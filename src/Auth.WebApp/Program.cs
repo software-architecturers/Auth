@@ -15,7 +15,6 @@ namespace Auth.WebApp
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) => WebHost
             .CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((host, config) => { config.AddEnvironmentVariables(); })
             .UseStartup<Startup>()
             .UseSerilog(LoggerConfiguration)
             .UseKestrel(options =>

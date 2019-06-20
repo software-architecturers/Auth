@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Auth.Application.Cqrs.User.Commands;
 using Auth.Domain.Entities;
@@ -21,6 +23,13 @@ namespace Auth.WebApp.Controllers
             _signInManager = signInManager;
         }
 
+        [HttpGet(nameof(GetExternalProviders))]
+        [ProducesResponseType(200)]
+        public async Task<IActionResult> GetExternalProviders()
+        {
+            var providers = await _signInManager.GetExternalAuthenticationSchemesAsync();
+            return Ok(providers.Select(p => new {p.Name, p.DisplayName}));
+        }
 
         [HttpPost]
         [ProducesResponseType(200)]

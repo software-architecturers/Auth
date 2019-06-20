@@ -75,6 +75,37 @@ namespace Auth.WebApp.Controllers
         }
 
         /// <summary>
+        /// initiate roundtrip to external authentication provider
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> ChallengeCore(string provider, string clientId, string returnUrl)
+        {
+            var client = await _clientStore.FindClientByIdAsync(clientId);
+
+
+            // validate returnUrl - either it is a valid OIDC URL or back to a local page
+            if (!client.RedirectUris.Contains(returnUrl))
+            {
+                // user might have clicked on a malicious link - should be logged
+                throw new Exception("invalid return URL");
+            }
+
+            if (string.IsNullOrEmpty(returnUrl)) returnUrl = "~/";
+            // start challenge and roundtrip the return URL and scheme 
+            var props = new AuthenticationProperties
+            {
+                RedirectUri = Url.Action(nameof(Callback)),
+                Items =
+                {
+                    ["returnUrl"] = returnUrl,
+                    ["scheme"] = provider
+                }
+            };
+
+            return Challenge(props, provider);
+        }
+
+        /// <summary>
         /// Post processing of external authentication
         /// </summary>
         [HttpGet]
@@ -123,6 +154,53 @@ namespace Auth.WebApp.Controllers
                 : Redirect("~/");
         }
 
+        /// <summary>
+        /// Post processing of external authentication
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> CallbackCore()
+        {
+            // read external identity from the temporary cookie
+            var result = await HttpContext.AuthenticateAsync(IdentityConstants.ExternalScheme);
+            if (result?.Succeeded != true)
+            {
+                throw new Exception("External authentication error");
+            }
+
+            // lookup our user and external provider info
+            var externalUserDto = await _mediator.Send(new FindUser(result));
+
+
+            var user = externalUserDto.User ?? await _mediator.Send(new CreateUser(externalUserDto));
+
+            // this allows us to collect any additional claims or properties
+            // for the specific protocols used and store them in the local auth cookie.
+            // this is typically used to store data needed for sign-out from oidc
+            var additionalLocalClaims = new List<Claim>();
+            var localSignInProps = new AuthenticationProperties();
+            ProcessLoginCallbackForOidc(result, additionalLocalClaims, localSignInProps);
+
+            // issue authentication cookie for user
+            // we must issue the cookie manually, and can't use the SignInManager because
+            // it doesn't expose an API to issue additional claims from the login workflow
+            var principal = await _signInManager.CreateUserPrincipalAsync(user);
+            additionalLocalClaims.AddRange(principal.Claims);
+            var name = principal.FindFirst(JwtClaimTypes.Name)?.Value ?? user.UserName ?? user.Id;
+
+            await _events.RaiseAsync(new UserLoginSuccessEvent(externalUserDto.Provider, externalUserDto.ProviderUserId,
+                user.Id, name));
+
+            await HttpContext.SignInAsync(user.Id, name, externalUserDto.Provider, localSignInProps,
+                additionalLocalClaims.ToArray());
+
+            // delete temporary cookie used during external authentication
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            
+            var returnUrl = result.Properties.Items["returnUrl"];
+            var token = await _mediator.Send(new GetUserToken(user));
+            var uriBuilder = new UriBuilder(returnUrl) {Query = $"token={token.Token}"};
+            return Redirect(uriBuilder.ToString());
+        }
 
         private static void ProcessLoginCallbackForOidc(AuthenticateResult externalResult,
             ICollection<Claim> localClaims,
